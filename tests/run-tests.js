@@ -22,6 +22,7 @@ await import('./sidepanelMarkup.test.js');
 await import('./sidepanelSource.test.js');
 await import('./backgroundSource.test.js');
 await import('./readme.test.js');
+await import('./live-smoke.test.js');
 
 let failed = 0;
 
