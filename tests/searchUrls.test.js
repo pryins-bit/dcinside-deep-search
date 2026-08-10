@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildSearchRequests, buildSearchUrl, parseKeywordInput } from '../src/searchUrls.js';
+import { buildLatestListUrl, buildSearchRequests, buildSearchUrl, parseKeywordInput } from '../src/searchUrls.js';
 
 const minorContext = {
   currentUrl: 'https://gall.dcinside.com/mgallery/board/lists/?id=apistogramma&page=1&search_pos=-712643&s_type=search_subject_memo&s_keyword=%EC%9E%90%EB%B0%98',
@@ -22,6 +22,17 @@ test('parseKeywordInput trims blanks and removes duplicates', () => {
 
 test('parseKeywordInput uses fallback keyword for empty input', () => {
   assert.deepEqual(parseKeywordInput('', '자반'), ['자반']);
+});
+
+test('buildLatestListUrl strips search parameters and returns first gallery page', () => {
+  const url = new URL(buildLatestListUrl(minorContext));
+
+  assert.equal(url.pathname, '/mgallery/board/lists/');
+  assert.equal(url.searchParams.get('id'), 'apistogramma');
+  assert.equal(url.searchParams.get('page'), '1');
+  assert.equal(url.searchParams.has('search_pos'), false);
+  assert.equal(url.searchParams.has('s_type'), false);
+  assert.equal(url.searchParams.has('s_keyword'), false);
 });
 
 test('buildSearchUrl removes search_pos from current URL', () => {
@@ -64,6 +75,7 @@ test('buildSearchRequests maps parsed keywords to sequential request objects', (
     requests.map((request) => request.keyword),
     ['축양장', '여과기']
   );
+  assert.deepEqual(requests.map((request) => request.mode), ['search', 'search']);
   assert.equal(requests[0].url, buildSearchUrl(minorContext, '축양장'));
   assert.equal(requests[1].url, buildSearchUrl(minorContext, '여과기'));
 });
@@ -114,12 +126,22 @@ test('buildSearchUrl canonicalizes enter and view contexts before searching', ()
   assert.equal(viewUrl.searchParams.has('no'), false);
 });
 
-test('buildSearchRequests can require explicit input for gallery main context', () => {
-  const requests = buildSearchRequests({
-    currentUrl: 'https://gall.dcinside.com/board/lists/?id=programming',
+test('buildSearchRequests uses latest gallery list when keyword input is empty', () => {
+  const context = {
+    currentUrl: 'https://gall.dcinside.com/board/lists/?id=programming&s_type=search_subject_memo&s_keyword=test&search_pos=-10000',
     galleryId: 'programming',
-    searchType: 'search_subject_memo'
-  }, '');
+    searchType: 'search_subject_memo',
+    keyword: 'test'
+  };
+  const requests = buildSearchRequests(context, '');
 
-  assert.deepEqual(requests, []);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].keyword, '');
+  assert.equal(requests[0].mode, 'latest');
+  const url = new URL(requests[0].url);
+  assert.equal(url.pathname, '/board/lists/');
+  assert.equal(url.searchParams.get('page'), '1');
+  assert.equal(url.searchParams.has('s_keyword'), false);
+  assert.equal(url.searchParams.has('s_type'), false);
+  assert.equal(url.searchParams.has('search_pos'), false);
 });
