@@ -89,7 +89,7 @@ function setStatus(status, description = '') {
 function renderContext(context) {
   state.context = context;
   elements.galleryValue.textContent = context?.galleryName || context?.galleryId || 'unknown';
-  elements.keywordValue.textContent = context?.keyword || 'unknown';
+  elements.keywordValue.textContent = context?.keyword || '최신글';
   elements.searchTypeValue.textContent = context?.searchType || 'unknown';
   elements.startUrlValue.textContent = contextUrlLabel(context);
   elements.siteStatus.textContent = context?.ok ? '지원 가능한 검색 결과 페이지로 인식했습니다.' : '검색 결과 페이지로 인식하지 못했습니다.';
@@ -102,7 +102,7 @@ function renderGalleryContext(galleryContext) {
   state.galleryContext = galleryContext;
   if (state.context?.ok) return;
   elements.galleryValue.textContent = galleryContext?.galleryName || galleryContext?.galleryId || 'unknown';
-  elements.keywordValue.textContent = '입력 필요';
+  elements.keywordValue.textContent = '비움 = 최신글';
   elements.searchTypeValue.textContent = galleryContext?.searchType || 'unknown';
   elements.startUrlValue.textContent = contextUrlLabel(galleryContext);
   elements.siteStatus.textContent = galleryContext?.ok
@@ -206,20 +206,19 @@ async function startCrawl() {
       : '지원 가능한 디시인사이드 갤러리 페이지가 아닙니다.';
     return;
   }
-  if (!context?.ok && !elements.keywordInput.value.trim()) {
-    setStatus('error', '갤러리 메인에서는 수집할 검색어를 입력하세요.');
-    elements.siteStatus.textContent = '갤러리 메인에서는 수집할 검색어를 입력하세요.';
-    return;
-  }
-  const searchRequests = buildSearchRequests(crawlContext, elements.keywordInput.value);
+  const keywordInput = elements.keywordInput.value;
+  const latestMode = !keywordInput.trim();
+  const searchRequests = buildSearchRequests(crawlContext, keywordInput);
   if (searchRequests.length === 0) {
-    setStatus('error', '수집할 검색어를 찾지 못했습니다.');
-    elements.siteStatus.textContent = '수집할 검색어를 입력하거나 검색 결과 페이지에서 실행하세요.';
+    setStatus('error', '수집 시작 URL을 만들지 못했습니다.');
+    elements.siteStatus.textContent = '현재 갤러리에서 수집 시작 URL을 만들지 못했습니다.';
     return;
   }
   state.results = [];
   renderResults();
-  elements.siteStatus.textContent = '수집 중입니다. 글 목록이 아래에 쌓입니다.';
+  elements.siteStatus.textContent = latestMode
+    ? '검색어 없이 최신 글 목록을 수집합니다.'
+    : '수집 중입니다. 글 목록이 아래에 쌓입니다.';
   const result = await send({
     type: MESSAGES.START_CRAWL,
     startUrl: searchRequests[0].url,
