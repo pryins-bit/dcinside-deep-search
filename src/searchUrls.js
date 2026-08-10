@@ -1,3 +1,5 @@
+import { toCanonicalGalleryListUrl } from './dcinsideUrls.js';
+
 export function parseKeywordInput(input = '', fallbackKeyword = '') {
   const source = input.trim() ? input : fallbackKeyword;
   const seen = new Set();
@@ -10,6 +12,22 @@ export function parseKeywordInput(input = '', fallbackKeyword = '') {
       seen.add(keyword);
       return true;
     });
+}
+
+export function buildLatestListUrl(context) {
+  const canonicalListUrl = context.canonicalListUrl || toCanonicalGalleryListUrl(context.currentUrl, context.galleryId);
+  if (!canonicalListUrl) return '';
+
+  const nextUrl = new URL(canonicalListUrl);
+  const galleryId = context.galleryId || nextUrl.searchParams.get('id') || '';
+  nextUrl.searchParams.set('id', galleryId);
+  nextUrl.searchParams.set('page', '1');
+  nextUrl.searchParams.delete('search_pos');
+  nextUrl.searchParams.delete('s_type');
+  nextUrl.searchParams.delete('s_keyword');
+  nextUrl.searchParams.delete('search_keyword');
+
+  return nextUrl.toString();
 }
 
 export function buildSearchUrl(context, keyword) {
@@ -29,8 +47,13 @@ export function buildSearchUrl(context, keyword) {
 
 export function buildSearchRequests(context, keywordInput = '') {
   if (!context?.currentUrl && !context?.canonicalListUrl) return [];
-  return parseKeywordInput(keywordInput, context.keyword)
-    .map((keyword) => ({ keyword, url: buildSearchUrl(context, keyword) }))
+
+  if (!String(keywordInput || '').trim()) {
+    const url = buildLatestListUrl(context);
+    return url ? [{ keyword: '', mode: 'latest', url }] : [];
+  }
+
+  return parseKeywordInput(keywordInput)
+    .map((keyword) => ({ keyword, mode: 'search', url: buildSearchUrl(context, keyword) }))
     .filter((request) => request.url);
 }
-import { toCanonicalGalleryListUrl } from './dcinsideUrls.js';
