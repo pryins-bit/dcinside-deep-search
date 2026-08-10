@@ -50,11 +50,11 @@ test('list filter controls keep visible labels when fields have values', () => {
   assert.doesNotMatch(sidepanelHtml, /placeholder=["']추천 수 이상["']/);
 });
 
-test('sidepanel exposes minimal multi-keyword input before collection controls', () => {
+test('sidepanel exposes optional multi-keyword input before collection controls', () => {
   assert.match(sidepanelHtml, /<section class=["']section search-input-section["']>/);
   assert.match(sidepanelHtml, /<h2>수집할 검색어<\/h2>/);
-  assert.match(sidepanelHtml, /<textarea\b[^>]*id=["']keywordInput["'][^>]*placeholder=["']검색어를 줄바꿈 또는 쉼표로 구분해서 입력["']/);
-  assert.match(sidepanelHtml, /갤러리 메인에서는 검색어를 입력해야 수집을 시작할 수 있습니다\./);
+  assert.match(sidepanelHtml, /<textarea\b[^>]*id=["']keywordInput["'][^>]*placeholder=["'][^"']*비워두면 최신 글[^"']*줄바꿈 또는 쉼표[^"']*["']/);
+  assert.match(sidepanelHtml, /검색어를 비워두면 해당 갤러리의 최신 글 목록을 수집합니다\./);
   assert.ok(sidepanelHtml.indexOf('id="keywordInput"') < sidepanelHtml.indexOf('id="startBtn"'));
 });
 
