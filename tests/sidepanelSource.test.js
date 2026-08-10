@@ -15,10 +15,12 @@ test('sidepanel distinguishes source and canonical crawl URLs', () => {
   assert.match(sidepanelSource, /현재 페이지를 갤러리 목록 URL로 변환해 수집합니다/);
 });
 
-test('sidepanel start flow accepts galleryContext and requires keyword on gallery main', () => {
+test('sidepanel start flow accepts galleryContext and allows blank keyword for latest posts', () => {
   assert.match(sidepanelSource, /state\s*=\s*\{[\s\S]*galleryContext:\s*null/);
   assert.match(sidepanelSource, /const\s+crawlContext\s*=\s*context\?\.ok\s*\?\s*context\s*:\s*galleryContext/);
-  assert.match(sidepanelSource, /갤러리 메인에서는 수집할 검색어를 입력하세요/);
+  assert.match(sidepanelSource, /const\s+latestMode\s*=\s*!keywordInput\.trim\(\)/);
+  assert.match(sidepanelSource, /검색어 없이 최신 글 목록을 수집합니다/);
+  assert.doesNotMatch(sidepanelSource, /갤러리 메인에서는 수집할 검색어를 입력하세요/);
   assert.match(sidepanelSource, /현재 페이지 형식에서는 내부 검색 URL을 만들 수 없습니다/);
 });
 
